@@ -1,12 +1,14 @@
 import React, { useState,useEffect } from 'react'
 import Person from './components/Note'
 import server from './services/server'
+import './index.css'
 const App = () => {
   const [ persons, setPersons ] = useState([])
   const [ newName, setNewName ] = useState('eshta')
   const [ newNumber, setNewNumber ] = useState('01xxxxxxxx')
   const [search ,setSearch] = useState('type name to search for')
   const [showAll,setShowAll]= useState(true); 
+  const [notif,setNotif]=useState(null)
   const personToShow = showAll ? persons: persons.filter(person => person.content.toUpperCase() === search.toUpperCase())
   useEffect(() => {server.getAll().then(response=>setPersons(response.data))},[])
 const addName=(event)=>{
@@ -19,14 +21,15 @@ const addName=(event)=>{
    const tofind = persons.find(person=>person.content===newName)
      console.log(tofind)
    if(tofind!==undefined)
-   { 
-    window.confirm(`${newName} is already added to phonebook,replace the old number with a new one `)
-    server.update(tofind.id,nameObject);
-    tofind.number=newNumber
+   {  tofind.number=newNumber
+    if(window.confirm(`${newName} is already added to phonebook,replace the old number with a new one `))
+    server.update(tofind.id,tofind,notify);
+
    }  
    else {
     server.create(nameObject)
    setPersons(persons.concat(nameObject))
+    notify("Name has been added")
       }
    setNewName('')
    setNewNumber('')
@@ -46,6 +49,14 @@ const addName=(event)=>{
   
 
   }
+  const notify=(message)=>
+  {
+    setNotif(message)
+    setTimeout(() => {
+          setNotif(null)
+        }, 5000)
+
+  }
   const delete_person=(id,name)=>
   {  
     if(window.confirm("delete "+name)){
@@ -54,6 +65,7 @@ const addName=(event)=>{
   }
   return (
     <div>
+      <h1 class="error">{notif}</h1>
       <h2>Phonebook</h2>
       
         <div>

@@ -1,70 +1,95 @@
-import React, { useState, useEffect } from 'react'
-import Note from './components/Note' 
-import noteService from './services/notes'
-
+import React, { useState,useEffect } from 'react'
+import Person from './components/Note'
+import server from './services/server'
 const App = () => {
-  const [notes, setNotes] = useState([]) 
-  const [newNote, setNewNote] = useState('')
-  const [showAll, setShowAll] = useState(true)
+  const [ persons, setPersons ] = useState([])
+  const [ newName, setNewName ] = useState('eshta')
+  const [ newNumber, setNewNumber ] = useState('01xxxxxxxx')
+  const [search ,setSearch] = useState('type name to search for')
+  const [showAll,setShowAll]= useState(true); 
+  const personToShow = showAll ? persons: persons.filter(person => person.content.toUpperCase() === search.toUpperCase())
+  useEffect(() => {server.getAll().then(response=>setPersons(response.data))},[])
+const addName=(event)=>{
+   
+   event.preventDefault()
+   const nameObject={
+    content :newName,
+    number :newNumber,
+   }
+   const tofind = persons.find(person=>person.content===newName)
+     console.log(tofind)
+   if(tofind!==undefined)
+   {  tofind.number=newNumber
+    window.confirm(`${newName} is already added to phonebook,replace the old number with a new one `)
+    server.update(tofind.id,tofind);
 
-  useEffect(() => {
-      noteService.getAll().then(response => {
-        setNotes(response.data)
-      })
-  }, [])
-  
-const toggleImportance=(id)=>
+   }  
+   else {
+    server.create(nameObject)
+   setPersons(persons.concat(nameObject))
+      }
+   setNewName('')
+   setNewNumber('')
+  }
+  const handleChange=(event)=>
   {
-    const note = notes.find(n=> n.id===id)
-    note.important=!note.important
-    noteService.update(id,note).then(response=>{setNotes(notes.map(note=> id ===note.id?response.data:note))})
-  }
+    setNewName(event.target.value);
 
-  const addNote = (event) => {
-    event.preventDefault()
-    const noteObject = {
-      content: newNote,
-      date: new Date().toISOString(),
-      important: Math.random() > 0.5,
-      id: notes.length + 1,
-    }
+  }
+  const handleChangeNum=(event)=>
+  {
+    setNewNumber(event.target.value)
+  }
+  const handleChangeSearch=(event)=>
+  {
+    setSearch(event.target.value)
   
-     noteService.create(noteObject).then(response => {
-      setNotes(notes.concat(response.data))
-      setNewNote('')
-    })
+
   }
-
-  const handleNoteChange = (event) => {
-    setNewNote(event.target.value)
+  const delete_person=(id,name)=>
+  {  
+    if(window.confirm("delete "+name)){
+    server.remove(id);
+   setPersons(persons.filter(person=>person.id!==id))}
   }
-
-  const notesToShow = showAll
-    ? notes
-    : notes.filter(note => note.important)
-
   return (
     <div>
-      <h1>Notes</h1>
-      <div>
+      <h2>Phonebook</h2>
+      
+        <div>
+          name:
+           <input
+           onChange={handleChangeSearch}
+          value = {search}
+           />
+          
         <button onClick={() => setShowAll(!showAll)}>
-          show {showAll ? 'important' : 'all' }
+           {showAll ? 'search' : 'showall' }
         </button>
-      </div>      
-      <ul>
-        {notesToShow.map((note, i) => 
-          <Note key={i} note={note} toggleImportance={()=>toggleImportance(note.id)}/>
-        )}
-      </ul>
-      <form onSubmit={addNote}>
-        <input
-          value={newNote}
-          onChange={handleNoteChange}
-        />
-        <button type="submit">save</button>
-      </form>   
+          
+        </div>
+      
+      <h2>add a new</h2>
+      <form onSubmit={addName}>
+        <div>
+          name:
+           <input
+           onChange={handleChange}
+          value = {newName}
+           />
+        </div>
+        <div>number: <input onChange={handleChangeNum}
+          value = {newNumber}
+           /></div>
+        <div>
+          <button type="submit">add</button>
+        </div>
+      </form>
+      <h2>Numbers</h2>
+      <ul>{ personToShow.map(person=> <Person key={person.content} person={person} delete_person={()=>delete_person(person.id,person.content)}/>)}</ul>
+      
     </div>
   )
 }
 
-export default App 
+export default App

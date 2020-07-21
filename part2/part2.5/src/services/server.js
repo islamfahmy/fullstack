@@ -9,9 +9,11 @@ const create = newObject => {
   return axios.post(baseUrl, newObject)
 }
 
-const update = (id, newObject) => {
-  return axios.put(`${baseUrl}/${id}`, newObject)
+const update =  (id, newObject,notify) => {
+  return axios.put(`${baseUrl}/${id}`, newObject).then(response => response.data).catch(error=>notify(newObject.content+" is already deleted"))
 }
+
+
 const remove=(id)=>{
 axios.delete(`${baseUrl}/${id}`	)  
 }
